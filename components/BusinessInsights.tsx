@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, BusinessTransaction, BusinessInsight, Language } from '../types';
 import { analyzeBusinessData } from '../services/gemini';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface HealthInsightsProps {
   profile: UserProfile;
@@ -31,6 +32,27 @@ const HealthInsights: React.FC<HealthInsightsProps> = ({ profile, history, langu
       fetchInsights();
     }
   }, [isSubscribed, profile, history]);
+
+  const chartData = useMemo(() => {
+    if (!history || history.length === 0) return [];
+    
+    // Group transactions by date
+    const aggregated = history.reduce((acc, curr) => {
+      const date = curr.date.split('T')[0]; // Simplify date string
+      if (!acc[date]) {
+        acc[date] = { date, amount: 0, units: 0 };
+      }
+      
+      // Sum up amounts and units
+      acc[date].amount += curr.amount;
+      acc[date].units += curr.units;
+      
+      return acc;
+    }, {} as Record<string, { date: string, amount: number, units: number }>);
+
+    // Sort chronologically
+    return Object.values(aggregated).sort((a: { date: string, amount: number, units: number }, b: { date: string, amount: number, units: number }) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [history]);
 
   if (!isSubscribed) {
     return (
@@ -96,9 +118,43 @@ const HealthInsights: React.FC<HealthInsightsProps> = ({ profile, history, langu
 
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <h3 className="text-lg font-bold mb-4">{t('Long-term Business Progress', 'Iterambere ry\'ubucuruzi ry\'igihe kirekire')}</h3>
-        <p className="text-slate-500 italic">
-          {t('Historical data tracking and market trend visualization coming soon.', 'Gukurikirana amakuru y\'amateka bije vuba.')}
-        </p>
+        
+        {chartData.length > 0 ? (
+          <div className="h-64 mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(value) => `${value >= 1000 ? (value/1000).toFixed(1) + 'k' : value}`} 
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  labelStyle={{ color: '#64748b', fontWeight: 'bold', marginBottom: '4px' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="amount" 
+                  name={t('Amount', 'Amafaranga')}
+                  stroke="#4f46e5" 
+                  strokeWidth={3} 
+                  dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} 
+                  activeDot={{ r: 6, strokeWidth: 0, fill: '#4f46e5' }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="h-64 mt-4 flex items-center justify-center bg-slate-50 rounded-xl border border-slate-100 border-dashed">
+             <p className="text-slate-500">
+               {t('No transaction data available for charting yet.', 'Nta makuru ahagije yo gukora igishushanyo.')}
+             </p>
+          </div>
+        )}
       </div>
     </div>
   );
