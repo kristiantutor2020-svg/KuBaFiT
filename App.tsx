@@ -6,6 +6,7 @@ import { ThemeProvider } from './components/ThemeContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import Sidebar from './components/Sidebar';
+import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import InventoryPlanner from './components/InventoryPlanner';
 import BusinessInsights from './components/BusinessInsights';
@@ -226,7 +227,7 @@ const AppContent: React.FC = () => {
 // Auth wrapper component
 const AuthWrapper: React.FC = () => {
   const { user, loading, clearError } = useAuth();
-  const [authView, setAuthView] = useState<'login' | 'register'>('login');
+  const [authView, setAuthView] = useState<'login' | 'register' | 'landing'>('landing');
   const [language] = useState<Language>(Language.RW);
 
   const switchToLogin = () => {
@@ -255,6 +256,9 @@ const AuthWrapper: React.FC = () => {
   }
 
   if (!user) {
+    if (authView === 'landing') {
+      return <LandingPage onGetStarted={switchToRegister} />;
+    }
     if (authView === 'register') {
       return <Register language={language} onSwitchToLogin={switchToLogin} />;
     }
