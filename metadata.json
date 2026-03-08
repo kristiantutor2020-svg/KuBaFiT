@@ -1,0 +1,8 @@
+
+{
+  "name": "KaziFit - East Africa's AI Workout Companion",
+  "description": "A comprehensive fitness tracking and workout planning app tailored for the East African market, featuring AI-powered health analysis, localized pricing in Kenyan Shillings, and multi-language support (English and Kinyarwanda).",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
